@@ -3,51 +3,84 @@ import time
 
 pygame.init()
 
-# Set up the drawing window
-screen = pygame.display.set_mode([1280, 720])
+# NOTE:(zxieeee) Defining colors
 
-laser_cooldown = 0.15  # 0.15 seconds between shots
+RED = (255, 0, 0)
+BLUE = (0, 255, 0)
+GREEN = (0, 0, 255)
+
+
+WIDTH = 1280
+HEIGHT = 720
+
+screen = pygame.display.set_mode([WIDTH, HEIGHT])
+
+
+class tank:
+    def __init__(self, screen, x, y, width, height, color):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.screen = screen
+        self.color = color
+        self.speed = 5
+
+        # weapons specific variables
+        self.laser = []
+        self.last_shot = 0
+        self.laser_cooldown = 0.15
+
+    def drawTank(self):
+        self.keys = pygame.key.get_pressed()
+        pygame.draw.rect(
+            self.screen, self.color, (self.x, self.y, self.width, self.height)
+        )
+
+    def moveTank(self, dx, dy):
+        self.x = max(0, min(self.x + dx, 1280 - self.width))
+        self.y = max(0, min(self.y + dy, 720 - self.height))
+
+    def handleMovements(self, left, right, up, down, fire):
+        self.drawTank()
+        if self.keys[left]:
+            self.moveTank(-self.speed, 0)
+        if self.keys[right]:
+            self.moveTank(self.speed, 0)
+        if self.keys[up]:
+            self.moveTank(0, -self.speed)
+        if self.keys[down]:
+            self.moveTank(0, self.speed)
+        if self.keys[fire]:
+            self.shootLaser(1)
+
+    # NOTE:(zxieeee):  Have plans to make a separete class called weapons
+    def shootLaser(self, direction):
+        current_time = time.time()
+        if current_time - self.last_shot >= self.laser_cooldown:
+            laser = {
+                "x": self.x + self.width // 2,
+                "y": self.y + self.height // 2,
+                "speed": direction * 10,
+            }
+            self.laser.append(laser)
+            self.last_shot = current_time  # Update the last shot time
+
+    def drawLasers(self):
+        # self.shootLaser(1)
+        for lasers in self.laser:
+            pygame.draw.circle(self.screen, (255, 0, 0), (lasers["x"], lasers["y"]), 5)
+            # Remove lasers that go off-screen
+            self.laser = [lasers for lasers in self.laser if 0 <= lasers["x"] <= 1280]
+            lasers["x"] += lasers["speed"]
+
+
 clock = pygame.time.Clock()
 
-tank1 = {'x': 100, 'y': 100, 'width': 50, 'height': 50, 'speed': 5, 'laser': [], 'color': (0, 255, 0), 'last_shot': 0}
-tank2 = {'x': 1100, 'y': 600, 'width': 50, 'height': 50, 'speed': 5, 'laser': [], 'color': (0, 0, 255), 'last_shot': 0}
 
-def draw_tank(tank):
-    pygame.draw.rect(screen, tank['color'], (tank['x'], tank['y'], tank['width'], tank['height']))
+tank1 = tank(screen, 100, 100, 50, 55, RED)
+tank2 = tank(screen, 1100, 500, 50, 55, BLUE)
 
-def move_tank(tank, dx, dy):
-    tank['x'] = max(0, min(tank['x'] + dx, 1280 - tank['width']))
-    tank['y'] = max(0, min(tank['y'] + dy, 720 - tank['height']))
-
-# Function to shoot a laser
-def shoot_laser(tank, direction):
-    current_time = time.time()
-    if current_time - tank['last_shot'] >= laser_cooldown:
-        laser = {'x': tank['x'] + tank['width'] // 2, 'y': tank['y'] + tank['height'] // 2, 'speed': direction * 10}
-        tank['laser'].append(laser)
-        tank['last_shot'] = current_time  # Update the last shot time
-
-def draw_lasers(tank):
-    for laser in tank['laser']:
-        pygame.draw.circle(screen, (255, 0, 0), (laser['x'], laser['y']), 5)
-
-# Function to update laser positions
-def update_lasers(tank):
-    for laser in tank['laser']:
-        laser['x'] += laser['speed']
-    # Remove lasers that go off-screen
-    tank['laser'] = [laser for laser in tank['laser'] if 0 <= laser['x'] <= 1280]
-
-# Handle tank movement for both players
-def handle_tank_movement(keys, tank, left, right, up, down):
-    if keys[left]:
-        move_tank(tank, -tank['speed'], 0)  
-    if keys[right]:
-        move_tank(tank, tank['speed'], 0)  
-    if keys[up]:
-        move_tank(tank, 0, -tank['speed']) 
-    if keys[down]:
-        move_tank(tank, 0, tank['speed'])  
 
 # Run until the user asks to quit
 running = True
@@ -57,34 +90,20 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-    keys = pygame.key.get_pressed()
+    tank1.handleMovements(
+        pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_SPACE
+    )
+    tank2.handleMovements(
+        pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_RETURN
+    )
 
-    # Handle Tank 1 
-    handle_tank_movement(keys, tank1, pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s)
-    
-    # Handle Tank 2 (
-    handle_tank_movement(keys, tank2, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN)
-
-    if keys[pygame.K_SPACE]:  # Tank 1 shoots to the right
-        shoot_laser(tank1, 1)
-    if keys[pygame.K_RETURN]:  # Tank 2 shoots to the left
-        shoot_laser(tank2, -1)
-
-    
-    update_lasers(tank1)
-    update_lasers(tank2)
-    draw_lasers(tank1)
-    draw_lasers(tank2)
-
-    
-    draw_tank(tank1)
-    draw_tank(tank2)
+    tank1.drawLasers()
+    tank2.drawLasers()
 
     # Update the display
     pygame.display.update()
 
-    # Set frame rate
     clock.tick(90)
 
-# Done! Time to quit.
+
 pygame.quit()
