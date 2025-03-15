@@ -10,14 +10,20 @@ BLUE = (0, 255, 0)
 GREEN = (0, 0, 255)
 
 
+# NOTE:(zxieeee) Defining global variables
 WIDTH = 1280
 HEIGHT = 720
+RUNNING = True
+FLSCR = False
+DISIZE = [pygame.display.Info().current_w, pygame.display.Info().current_h]
 
-screen = pygame.display.set_mode([WIDTH, HEIGHT])
+
+KEYS = pygame.key.get_pressed()
+SCREEN = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
 
 
 class tank:
-    def __init__(self, screen, x, y, width, height, color):
+    def __init__(self, screen, keys, x, y, width, height, color):
         self.x = x
         self.y = y
         self.width = width
@@ -25,6 +31,7 @@ class tank:
         self.screen = screen
         self.color = color
         self.speed = 5
+        self.keys = keys
 
         # weapons specific variables
         self.laser = []
@@ -32,10 +39,13 @@ class tank:
         self.laser_cooldown = 0.15
 
     def drawTank(self):
-        self.keys = pygame.key.get_pressed()
         pygame.draw.rect(
             self.screen, self.color, (self.x, self.y, self.width, self.height)
         )
+
+    # def blitTank(self):
+    # tank = pygame.image.load("assets/tankBody_dark_outline.png").convert_alpha()
+    # blit
 
     def moveTank(self, dx, dy):
         self.x = max(0, min(self.x + dx, 1280 - self.width))
@@ -78,17 +88,28 @@ class tank:
 clock = pygame.time.Clock()
 
 
-tank1 = tank(screen, 100, 100, 50, 55, RED)
-tank2 = tank(screen, 1100, 500, 50, 55, BLUE)
+tank1 = tank(SCREEN, KEYS, 100, 100, 50, 55, RED)
+tank2 = tank(SCREEN, KEYS, 1100, 500, 50, 55, BLUE)
 
 
 # Run until the user asks to quit
-running = True
-while running:
-    screen.fill((0, 0, 0))
+while RUNNING:
+    SCREEN.fill((200, 0, 0))
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            RUNNING = False
+        if event.type == pygame.VIDEORESIZE:
+            if not FLSCR:
+                SCREEN = pygame.display.set_mode([event.w, event.h], pygame.RESIZABLE)
+
+    if KEYS[pygame.K_LSUPER] and KEYS[pygame.K_f]:
+        FLSCR = not FLSCR
+        if FLSCR:
+            SCREEN = pygame.display.set_mode([DSIZE], pygame.FULLSCREEN)
+        else:
+            SCREEN = pygame.display.set_mode(
+                [SCREEN.get_width(), SCREEN.get_height()], pygame.RESIZABLE
+            )
 
     tank1.handleMovements(
         pygame.K_a, pygame.K_d, pygame.K_w, pygame.K_s, pygame.K_SPACE
@@ -99,6 +120,7 @@ while running:
 
     tank1.drawLasers()
     tank2.drawLasers()
+    # tank1.blitTank()
 
     # Update the display
     pygame.display.update()
