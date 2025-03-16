@@ -23,7 +23,7 @@ SCREEN = pygame.display.set_mode([WIDTH, HEIGHT], pygame.RESIZABLE)
 
 
 class tank:
-    def __init__(self, screen, keys, x, y, width, height, color):
+    def __init__(self, screen, keys, x, y, width, height, color,is_opponent=False):
         self.x = x
         self.y = y
         self.width = width
@@ -32,6 +32,7 @@ class tank:
         self.color = color
         self.speed = 5
         self.keys = keys
+        self.is_opponent = is_opponent
 
         # weapons specific variables
         self.laser = []
@@ -52,6 +53,7 @@ class tank:
         self.y = max(0, min(self.y + dy, 720 - self.height))
 
     def handleMovements(self, left, right, up, down, fire):
+        self.keys = pygame.key.get_pressed() 
         self.drawTank()
         if self.keys[left]:
             self.moveTank(-self.speed, 0)
@@ -62,7 +64,7 @@ class tank:
         if self.keys[down]:
             self.moveTank(0, self.speed)
         if self.keys[fire]:
-            self.shootLaser(1)
+            self.shootLaser(-1 if self.is_opponent else 1)
 
     # NOTE:(zxieeee):  Have plans to make a separete class called weapons
     def shootLaser(self, direction):
@@ -89,7 +91,7 @@ clock = pygame.time.Clock()
 
 
 tank1 = tank(SCREEN, KEYS, 100, 100, 50, 55, RED)
-tank2 = tank(SCREEN, KEYS, 1100, 500, 50, 55, BLUE)
+tank2 = tank(SCREEN, KEYS, 1100, 500, 50, 55, BLUE,is_opponent=True)
 
 
 # Run until the user asks to quit
@@ -105,7 +107,7 @@ while RUNNING:
     if KEYS[pygame.K_LSUPER] and KEYS[pygame.K_f]:
         FLSCR = not FLSCR
         if FLSCR:
-            SCREEN = pygame.display.set_mode([DSIZE], pygame.FULLSCREEN)
+            SCREEN = pygame.display.set_mode([DISIZE], pygame.FULLSCREEN)
         else:
             SCREEN = pygame.display.set_mode(
                 [SCREEN.get_width(), SCREEN.get_height()], pygame.RESIZABLE
