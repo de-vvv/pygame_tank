@@ -3,7 +3,7 @@ import time
 
 
 class tank:
-    def __init__(self, screen, x, y, width, height, color):
+    def __init__(self, screen, x, y, width, height, color, is_opponent):
         self.x = x
         self.y = y
         self.width = width
@@ -41,7 +41,7 @@ class tank:
             self.moveTank(0, -self.speed)
         if keys[down]:
             self.moveTank(0, self.speed)
-        if self.keys[fire]:
+        if keys[fire]:
             self.shootLaser(-1 if self.is_opponent else 1)
 
     # NOTE:(zxieeee):  Have plans to make a separete class called weapons
@@ -69,7 +69,7 @@ class tank:
 clock = pygame.time.Clock()
 
 
-tank1 = tank(SCREEN, 100, 100, 50, 55, RED)
+tank1 = tank(SCREEN, 100, 100, 50, 55, RED, is_opponent=False)
 tank2 = tank(SCREEN, 1100, 500, 50, 55, BLUE, is_opponent=True)
 
 
