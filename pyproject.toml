@@ -1,0 +1,8 @@
+[tool.ruff]
+# List of rule codes to ignore
+ignore = [
+    "F401",  # Ignore "module imported but unused"
+    "F403",
+    "F405"   # Ignore "from module import * used; unable to detect undefined names"
+]
+
