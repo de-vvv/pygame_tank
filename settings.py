@@ -14,3 +14,4 @@ RUNNING = True
 FLSCR = False
 DSIZE = [pygame.display.Info().current_w, pygame.display.Info().current_h]
 SCREEN = pygame.display.set_mode([1280, 720], pygame.RESIZABLE)
+CDSIZE = DSIZE

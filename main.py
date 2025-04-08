@@ -1,79 +1,74 @@
 from settings import *
-import time
+from weapons import *
+import math
 
 
-class tank:
-    def __init__(self, screen, x, y, width, height, color, is_opponent):
-        self.x = x
-        self.y = y
-        self.width = width
-        self.height = height
+class tank(weapons):
+    def __init__(self, screen, x, y):
+        super().__init__()
         self.screen = screen
-        self.color = color
-        self.speed = 5
-        self.is_opponent = is_opponent
+        self.speed = 3
+        self.angle = 0
+        self.dx = 0
+        self.dy = 0
 
-        # weapons specific variables
-        self.laser = []
-        self.last_shot = 0
-        self.laser_cooldown = 0.15
+        self.tank = pygame.image.load(
+            "assets/tankBody_dark_outline.png"
+        ).convert_alpha()
+        self.tankRect = self.tank.get_rect(center=(x, y))
 
     def drawTank(self):
-        tank = pygame.image.load("assets/tankBody_dark_outline.png").convert_alpha()
-        self.screen.blit(tank, [self.x, self.y])
-        # pygame.draw.rect(
-        #     self.screen, self.color, (self.x, self.y, self.width, self.height)
-        # )
+        self.rotatedTank = pygame.transform.rotozoom(self.tank, self.angle + 90, 1.0)
+        self.rotatedRect = self.rotatedTank.get_rect(center=self.tankRect.center)
+        self.screen.blit(self.rotatedTank, self.rotatedRect)
+        self.drawLasers()
 
-    # def blitTank(self):
+    def updateHead(self):
+        radians = math.radians(self.angle)
+        self.dx = -1 * math.cos(radians)
+        self.dy = math.sin(radians)
 
-    def moveTank(self, dx, dy):
-        self.x = max(0, min(self.x + dx, CDSIZE[0] - self.width))
-        self.y = max(0, min(self.y + dy, CDSIZE[1] - self.height))
+    def moveTank(self, head):
+        self.updateHead()
+        self.tankRect.x = max(
+            0,
+            min(
+                self.tankRect.x + self.speed * self.dx * head,
+                CDSIZE[0] - self.tankRect.width,
+            ),
+        )
+        self.tankRect.y = max(
+            0,
+            min(
+                self.tankRect.y + self.speed * self.dy * head,
+                CDSIZE[1] - self.tankRect.height,
+            ),
+        )
 
     def handleMovements(self, keys, left, right, up, down, fire):
-        self.drawTank()
         if keys[left]:
-            self.moveTank(-self.speed, 0)
+            self.angle += 5
+            self.updateHead()
         if keys[right]:
-            self.moveTank(self.speed, 0)
+            self.angle -= 5
+            self.updateHead()
         if keys[up]:
-            self.moveTank(0, -self.speed)
+            self.moveTank(1)
         if keys[down]:
-            self.moveTank(0, self.speed)
+            self.moveTank(-1)
         if keys[fire]:
-            self.shootLaser(-1 if self.is_opponent else 1)
-
-    # NOTE:(zxieeee):  Have plans to make a separete class called weapons
-    def shootLaser(self, direction):
-        current_time = time.time()
-        if current_time - self.last_shot >= self.laser_cooldown:
-            laser = {
-                "x": self.x + self.width // 2,
-                "y": self.y + self.height // 2,
-                "speed": direction * 10,
-            }
-            self.laser.append(laser)
-            self.last_shot = current_time  # Update the last shot time
-
-    def drawLasers(self):
-        for lasers in self.laser:
-            pygame.draw.circle(self.screen, (255, 0, 0), (lasers["x"], lasers["y"]), 5)
-            # Remove lasers that go off-screen
-            self.laser = [
-                lasers for lasers in self.laser if 0 <= lasers["x"] <= CDSIZE[0]
-            ]
-            lasers["x"] += lasers["speed"]
+            self.updateHead()
+            self.shootLaser()
+        self.drawTank()
 
 
 clock = pygame.time.Clock()
 
+tank1 = tank(SCREEN, 100, 100)
+tank2 = tank(SCREEN, 1100, 500)
 
-tank1 = tank(SCREEN, 100, 100, 50, 55, RED, is_opponent=False)
-tank2 = tank(SCREEN, 1100, 500, 50, 55, BLUE, is_opponent=True)
 
-
-# Run until the user asks to quit
+# NOTE:(zxie): while loop starts
 while RUNNING:
     KEYS = pygame.key.get_pressed()
     for event in pygame.event.get():
@@ -101,10 +96,6 @@ while RUNNING:
     tank2.handleMovements(
         KEYS, pygame.K_LEFT, pygame.K_RIGHT, pygame.K_UP, pygame.K_DOWN, pygame.K_RETURN
     )
-
-    tank1.drawLasers()
-    tank2.drawLasers()
-    # tank1.blitTank()
 
     # Update the display
     pygame.display.update()
